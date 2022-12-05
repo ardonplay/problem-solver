@@ -10,5 +10,5 @@ namespace minCutModule
 {
 
 ScAddr Keynodes::find_min_cut;
-
+ScAddr Keynodes::nrel_answer;
 }

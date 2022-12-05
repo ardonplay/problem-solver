@@ -20,6 +20,8 @@ class Keynodes : public ScObject
   SC_GENERATED_BODY()
 
 public:
+  SC_PROPERTY(Keynode("nrel_answer"), ForceCreate)
+  static ScAddr nrel_answer;
 
   SC_PROPERTY(Keynode("find_min_cut"), ForceCreate)
   static ScAddr find_min_cut;

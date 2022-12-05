@@ -16,49 +16,57 @@ namespace minCutModule {
 
 SC_AGENT_IMPLEMENTATION(minCutAgent) {
 
-SC_LOG_DEBUG("INIT Agent: MinCut");
+  SC_LOG_DEBUG("INIT Agent: MinCut");
 
-ScAddr node = ms_context->GetEdgeTarget(edgeAddr);
+  ScAddr node = ms_context->GetEdgeTarget(edgeAddr);
+  ScIterator3Ptr it = ms_context->Iterator3(
+      node,
+      ScType::EdgeAccessConstPosPerm,
+      ScType(0)
+  );
+  int minCut = INT_MAX;
+  ScAddr startNode = node;
+  while (it->Next()) {
+    node = it->Get(2);
+    int count = 0;
+    ScType type = ms_context->GetElementType(node);
 
-ScIterator3Ptr it = ms_context->Iterator3(
-    node,
-    ScType::EdgeAccessConstPosPerm,
-    ScType(0)
-);
-int minCut = INT_MAX;
-while (it->Next()) {
-node = it->Get(2);
-int count = 0;
-ScType type = ms_context->GetElementType(node);
+    if (type.IsNode()) {
+      ScAddr node2 = node;
+      ScIterator3Ptr it2 = ms_context->Iterator3(node2, ScType::EdgeDCommonConst, ScType(0));
+      while (it2->Next()) {
+        node2 = it2->Get(2);
+        ScType type2 = ms_context->GetElementType(node2);
+        if (type2.IsNode()) {
+          if (ms_context->HelperCheckEdge(node, node2, ScType::EdgeDCommonConst)) {
+            count++;
+          }
+        }
+      }
 
-if (type.IsNode()) {
-ScAddr node2 = node;
-ScIterator3Ptr it2 = ms_context->Iterator3(node2, ScType::EdgeDCommonConst, ScType(0));
-while (it2->Next()) {
-node2 = it2->Get(2);
-ScType type2 = ms_context->GetElementType(node2);
-if (type2.IsNode()) {
-if (ms_context->HelperCheckEdge(node, node2, ScType::EdgeDCommonConst)) {
-count++;
-}
-}
-}
+      SC_LOG_DEBUG("Vertex:" + ms_context->HelperGetSystemIdtf(node) + " Edges: " + std::to_string(count));
 
-SC_LOG_DEBUG("Vertex:" + ms_context->HelperGetSystemIdtf(node) + " Edges: " + std::to_string(count));
+      if (minCut >= count) {
+        minCut = count;
+      }
+    }
+  }
+  SC_LOG_DEBUG("Minimal cut: " + std::to_string(minCut));
 
-if(minCut >= count){
-minCut = count;
-}
-}
-}
-SC_LOG_DEBUG("Minimal cut: " + std::to_string(minCut));
+  ScAddr answer = ms_context->CreateNode(ScType::NodeConst);
+  ms_context->HelperSetSystemIdtf("MinCut for: '" + ms_context->HelperGetSystemIdtf(startNode) + "'", answer);
 
-ScAddr answer = ms_context->CreateNode(ScType::NodeConstStruct);
-ms_context->CreateEdge(ScType::EdgeAccessConstPosPerm,
-    node,
-    answer);
+  ScAddr arc = ms_context->CreateEdge(ScType::EdgeAccessConstPosPerm, startNode, answer);
+  ms_context->CreateEdge(ScType::EdgeAccessConstPosPerm, Keynodes::nrel_answer, arc);
 
-return SC_RESULT_OK;
+  ScAddr number = ms_context->CreateNode(ScType::NodeConst);
+  ms_context->HelperSetSystemIdtf(to_string(minCut), number);
+
+  ScAddr arc2 = ms_context->CreateEdge(ScType::EdgeAccessConstPosPerm, answer, number);
+
+  SC_LOG_DEBUG("DEINIT GamAgent");
+
+  return SC_RESULT_OK;
 }
 
 }
